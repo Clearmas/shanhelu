@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>《山河录》- 单场景战斗 Demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Microsoft YaHei", sans-serif;
+    }
+
+    body {
+      background: linear-gradient(to bottom, #1a1a1a, #0c0c0c);
+      color: #f5e6c8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+      font-size: 40px;
+      letter-spacing: 4px;
+    }
+
+    .subtitle {
+      color: #c8a96b;
+      margin-bottom: 20px;
+    }
+
+    .battlefield {
+      width: 1200px;
+      max-width: 95%;
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .character {
+      width: 40%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 20px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    }
+
+    .character h2 {
+      margin-bottom: 10px;
+      color: #d8b16d;
+    }
+
+    .bar {
+      height: 24px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+
+    .hp {
+      height: 100%;
+      background: linear-gradient(to right, #a30000, #ff4b4b);
+      transition: 0.3s;
+    }
+
+    .energy {
+      height: 100%;
+      background: linear-gradient(to right, #0044aa, #3aa8ff);
+      transition: 0.3s;
+    }
+
+    .stats {
+      margin-top: 10px;
+      line-height: 1.8;
+    }
+
+    .center-area {
+      width: 15%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: #d8b16d;
+    }
+
+    .cards {
+      width: 1200px;
+      max-width: 95%;
+      margin-top: 30px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .card {
+      width: 180px;
+      min-height: 240px;
+      background: linear-gradient(to bottom, #2b2b2b, #151515);
+      border: 2px solid #7a5b2e;
+      border-radius: 18px;
+      padding: 15px;
+      cursor: pointer;
+      transition: 0.25s;
+      position: relative;
+    }
+
+    .card:hover {
+      transform: translateY(-8px) scale(1.03);
+      box-shadow: 0 0 18px rgba(255,215,120,0.3);
+    }
+
+    .card-title {
+      font-size: 22px;
+      margin-bottom: 10px;
+      color: #f2d28b;
+    }
+
+    .cost {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #204d9b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .card-type {
+      color: #9db9ff;
+      margin-bottom: 10px;
+    }
+
+    .desc {
+      line-height: 1.6;
+      color: #ddd;
+      font-size: 14px;
+    }
+
+    .log {
+      width: 1200px;
+      max-width: 95%;
+      margin-top: 30px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 20px;
+      padding: 20px;
+      height: 220px;
+      overflow-y: auto;
+      line-height: 1.7;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      gap: 20px;
+    }
+
+    button {
+      background: #7a4b00;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background: #b56a00;
+    }
+  </style>
+</head>
+<body>
+  <h1>《山河录》</h1>
+  <div class="subtitle">单场景战斗原型 Demo - 勇者 VS 苍狼神</div>
+
+  <div class="battlefield">
+    <div class="character">
+      <h2>勇者 · 草原行者</h2>
+      <div>生命值</div>
+      <div class="bar"><div class="hp" id="playerHpBar"></div></div>
+      <div>能量</div>
+      <div class="bar"><div class="energy" id="playerEnergyBar"></div></div>
+      <div class="stats">
+        <div id="playerHpText"></div>
+        <div id="playerEnergyText"></div>
+        <div id="playerBlockText"></div>
+      </div>
+    </div>
+
+    <div class="center-area">⚔️</div>
+
+    <div class="character">
+      <h2>苍狼神 · 孛儿苍</h2>
+      <div>生命值</div>
+      <div class="bar"><div class="hp" id="enemyHpBar"></div></div>
+      <div class="stats">
+        <div id="enemyHpText"></div>
+        <div id="enemyIntent"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cards" id="cardsContainer"></div>
+
+  <div class="controls">
+    <button onclick="endTurn()">结束回合</button>
+    <button onclick="restartGame()">重新开始</button>
+  </div>
+
+  <div class="log" id="log"></div>
+
+  <script>
+    const maxPlayerHp = 100;
+    const maxEnemyHp = 140;
+
+    let player = {
+      hp: 100,
+      energy: 3,
+      block: 0,
+      strength: 0
+    };
+
+    let enemy = {
+      hp: 140,
+      intent: 12
+    };
+
+    const cards = [
+      {
+        name: '直击',
+        type: '普通攻击',
+        cost: 1,
+        desc: '造成 8 点伤害。',
+        play: () => {
+          damageEnemy(8 + player.strength);
+          log('勇者挥出长刀，造成 8 点伤害。');
+        }
+      },
+      {
+        name: '格挡',
+        type: '普通防御',
+        cost: 1,
+        desc: '获得 7 点护甲。',
+        play: () => {
+          player.block += 7;
+          log('勇者举盾防守，获得 7 点护甲。');
+        }
+      },
+      {
+        name: '狼血战歌',
+        type: '神佑卡',
+        cost: 2,
+        desc: '获得 3 点力量。',
+        play: () => {
+          player.strength += 3;
+          log('草原战歌响起，勇者获得 3 点力量。');
+        }
+      },
+      {
+        name: '裂筋斩',
+        type: '进阶攻击',
+        cost: 2,
+        desc: '造成 18 点伤害。',
+        play: () => {
+          damageEnemy(18 + player.strength);
+          log('勇者发动裂筋斩！');
+        }
+      },
+      {
+        name: '苍狼追猎',
+        type: '事件卡',
+        cost: 3,
+        desc: '连续攻击三次，每次 7 点伤害。',
+        play: () => {
+          for(let i=0;i<3;i++) {
+            damageEnemy(7 + player.strength);
+          }
+          log('狼群虚影掠过战场，连续三次攻击！');
+        }
+      }
+    ];
+
+    function renderCards() {
+      const container = document.getElementById('cardsContainer');
+      container.innerHTML = '';
+
+      cards.forEach((card, index) => {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+          <div class="cost">${card.cost}</div>
+          <div class="card-title">${card.name}</div>
+          <div class="card-type">${card.type}</div>
+          <div class="desc">${card.desc}</div>
+        `;
+
+        div.onclick = () => playCard(index);
+        container.appendChild(div);
+      });
+    }
+
+    function playCard(index) {
+      const card = cards[index];
+
+      if(player.energy < card.cost) {
+        log('能量不足！');
+        return;
+      }
+
+      player.energy -= card.cost;
+      card.play();
+
+      updateUI();
+      checkBattle();
+    }
+
+    function damageEnemy(amount) {
+      enemy.hp -= amount;
+      if(enemy.hp < 0) enemy.hp = 0;
+    }
+
+    function damagePlayer(amount) {
+      let remaining = amount;
+
+      if(player.block > 0) {
+        const absorbed = Math.min(player.block, remaining);
+        player.block -= absorbed;
+        remaining -= absorbed;
+      }
+
+      player.hp -= remaining;
+      if(player.hp < 0) player.hp = 0;
+    }
+
+    function endTurn() {
+      log(`苍狼神发动攻击，造成 ${enemy.intent} 点伤害！`);
+      damagePlayer(enemy.intent);
+
+      player.energy = 3;
+      player.block = 0;
+
+      enemy.intent = Math.floor(Math.random() * 8) + 8;
+
+      updateUI();
+      checkBattle();
+    }
+
+    function updateUI() {
+      document.getElementById('playerHpBar').style.width = (player.hp / maxPlayerHp * 100) + '%';
+      document.getElementById('playerEnergyBar').style.width = (player.energy / 3 * 100) + '%';
+      document.getElementById('enemyHpBar').style.width = (enemy.hp / maxEnemyHp * 100) + '%';
+
+      document.getElementById('playerHpText').innerText = `生命值：${player.hp}/${maxPlayerHp}`;
+      document.getElementById('playerEnergyText').innerText = `能量：${player.energy}/3`;
+      document.getElementById('playerBlockText').innerText = `护甲：${player.block}`;
+
+      document.getElementById('enemyHpText').innerText = `生命值：${enemy.hp}/${maxEnemyHp}`;
+      document.getElementById('enemyIntent').innerText = `敌方意图：下一回合攻击 ${enemy.intent}`;
+    }
+
+    function checkBattle() {
+      if(enemy.hp <= 0) {
+        log('苍狼神倒下了。草原重新燃起篝火。');
+        alert('胜利！你击败了苍狼神！');
+      }
+
+      if(player.hp <= 0) {
+        log('勇者倒在风雪之中……');
+        alert('失败！');
+      }
+    }
+
+    function log(text) {
+      const logBox = document.getElementById('log');
+      logBox.innerHTML += `<div>➤ ${text}</div>`;
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function restartGame() {
+      player.hp = 100;
+      player.energy = 3;
+      player.block = 0;
+      player.strength = 0;
+
+      enemy.hp = 140;
+      enemy.intent = 12;
+
+      document.getElementById('log').innerHTML = '';
+
+      updateUI();
+      log('新的旅程开始了。');
+    }
+
+    renderCards();
+    updateUI();
+    log('苍狼神从风雪中现身……');
+  </script>
+</body>
+</html>
